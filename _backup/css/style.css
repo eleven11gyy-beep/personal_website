@@ -1,0 +1,731 @@
+/* ============================================
+   星图 · Star Atlas — 全局样式
+   Sky Guide 极简深空视觉体系
+   ============================================ */
+
+/* --- CSS Variables --- */
+:root {
+  --bg-deep: #020308;
+  --color-career: #72c6ff;
+  --color-life: #c89eff;
+  --color-line: #b8e0ff;
+  --color-text: #f0f5ff;
+  --color-text-dim: rgba(240, 245, 255, 0.55);
+  --color-text-muted: rgba(240, 245, 255, 0.35);
+  --glass-bg: rgba(2, 3, 8, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.18);
+  --radius-card: 16px;
+  --radius-btn: 8px;
+  --font-stack: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.2s ease;
+}
+
+/* --- Reset --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+  font-family: var(--font-stack);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a { color: var(--color-career); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* --- Canvas Container --- */
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+#canvas-container canvas {
+  display: block;
+}
+
+/* ============================================
+   Loading Screen (Celestial-Drift style rings)
+   ============================================ */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+#loading-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-content {
+  text-align: center;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.loader-logo {
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: 0.5em;
+  color: var(--color-text);
+}
+
+/* Ring animation container */
+.loader-ring-container {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.loader-ring-1 {
+  width: 240px;
+  height: 240px;
+  animation: pulse-ring 2.5s ease-in-out infinite,
+             ring-color-a 12s ease-in-out infinite;
+}
+
+.loader-ring-2 {
+  width: 210px;
+  height: 210px;
+  animation: pulse-ring 2.5s ease-in-out infinite 0.4s,
+             ring-color-b 12s ease-in-out infinite;
+}
+
+.loader-ring-3 {
+  width: 180px;
+  height: 180px;
+  animation: pulse-ring 2.5s ease-in-out infinite 0.8s,
+             ring-color-c 12s ease-in-out infinite;
+}
+
+.loader-button {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid rgba(114, 198, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  z-index: 10;
+  animation: ring-color-a 12s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.loader-button-text {
+  color: var(--color-text-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  font-weight: 300;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 0.2; }
+}
+
+@keyframes ring-color-a {
+  0%, 20% { border-color: rgba(114, 198, 255, 0.25); }
+  25%, 45% { border-color: rgba(200, 158, 255, 0.25); }
+  50%, 70% { border-color: rgba(184, 224, 255, 0.25); }
+  75%, 95% { border-color: rgba(114, 198, 255, 0.15); }
+  100% { border-color: rgba(114, 198, 255, 0.25); }
+}
+
+@keyframes ring-color-b {
+  0%, 20% { border-color: rgba(200, 158, 255, 0.2); }
+  25%, 45% { border-color: rgba(184, 224, 255, 0.2); }
+  50%, 70% { border-color: rgba(114, 198, 255, 0.2); }
+  75%, 95% { border-color: rgba(200, 158, 255, 0.15); }
+  100% { border-color: rgba(200, 158, 255, 0.2); }
+}
+
+@keyframes ring-color-c {
+  0%, 20% { border-color: rgba(184, 224, 255, 0.15); }
+  25%, 45% { border-color: rgba(114, 198, 255, 0.15); }
+  50%, 70% { border-color: rgba(200, 158, 255, 0.15); }
+  75%, 95% { border-color: rgba(184, 224, 255, 0.2); }
+  100% { border-color: rgba(184, 224, 255, 0.15); }
+}
+
+.loader-percent {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+}
+
+/* Loading background stars */
+.loading-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.loading-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(0.3);
+  transition: all 0.6s ease;
+}
+
+.loading-star.lit {
+  background: var(--color-career);
+  transform: scale(1);
+  box-shadow: 0 0 10px rgba(114, 198, 255, 0.5);
+}
+
+.loading-star.lit.life {
+  background: var(--color-life);
+  box-shadow: 0 0 10px rgba(200, 158, 255, 0.5);
+}
+
+.loading-star.dipper-star.lit {
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 16px rgba(114, 198, 255, 0.7);
+}
+
+/* ============================================
+   Tooltip
+   ============================================ */
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  padding: 6px 14px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -130%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, -140%);
+}
+
+.tooltip.hidden {
+  opacity: 0;
+}
+
+.tooltip-label {
+  color: var(--color-text);
+  margin-right: 6px;
+}
+
+.tooltip-year {
+  color: var(--color-text-dim);
+  font-size: 0.7rem;
+}
+
+/* ============================================
+   Glass Card
+   ============================================ */
+.card-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.card-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.glass-card {
+  position: relative;
+  width: 90%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 28px 30px;
+  background: rgba(2, 3, 8, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transform: scale(0.9) translateY(12px);
+  transition: transform var(--transition-smooth);
+}
+
+.card-overlay.visible .glass-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Fallback for no backdrop-filter */
+@supports not (backdrop-filter: blur(24px)) {
+  .glass-card {
+    background: rgba(2, 3, 8, 0.93);
+  }
+}
+
+.card-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  z-index: 2;
+}
+
+.card-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+  border-color: var(--glass-border-hover);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--color-text);
+  letter-spacing: 0.02em;
+}
+
+.card-badge {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(114, 198, 255, 0.12);
+  color: var(--color-career);
+  border: 1px solid rgba(114, 198, 255, 0.2);
+  letter-spacing: 0.05em;
+}
+
+.card-badge.life {
+  background: rgba(200, 158, 255, 0.12);
+  color: var(--color-life);
+  border-color: rgba(200, 158, 255, 0.2);
+}
+
+.card-period {
+  font-size: 0.8rem;
+  color: var(--color-text-dim);
+  margin-bottom: 16px;
+}
+
+.card-description {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(240, 245, 255, 0.75);
+  margin-bottom: 20px;
+}
+
+.card-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.card-images img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.card-links a {
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(114, 198, 255, 0.2);
+  color: var(--color-career);
+  transition: all var(--transition-fast);
+}
+
+.card-links a:hover {
+  background: rgba(114, 198, 255, 0.1);
+  border-color: rgba(114, 198, 255, 0.4);
+  text-decoration: none;
+}
+
+.card-quote {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================
+   Light Burst Effect
+   ============================================ */
+.light-burst {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.light-burst.active {
+  animation: lightBurst 0.7s ease-out forwards;
+}
+
+@keyframes lightBurst {
+  0% {
+    width: 4px; height: 4px;
+    box-shadow:
+      0 0 8px rgba(114,198,255,0.8),
+      0 0 24px rgba(114,198,255,0.4),
+      0 0 60px rgba(114,198,255,0.15);
+    opacity: 1;
+  }
+  100% {
+    width: 300px; height: 300px;
+    box-shadow:
+      0 0 4px rgba(114,198,255,0.3),
+      0 0 12px rgba(114,198,255,0.1),
+      0 0 30px rgba(114,198,255,0.03);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   Bottom Control Bar
+   ============================================ */
+#control-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(2, 3, 8, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.control-group + .control-group {
+  margin-left: 2px;
+  padding-left: 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ctrl-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 22px;
+  background: transparent;
+  color: var(--color-text-dim);
+  font-family: var(--font-stack);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.ctrl-btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ctrl-btn.active {
+  color: var(--color-career);
+  background: rgba(114, 198, 255, 0.1);
+}
+
+.ctrl-btn.active svg {
+  color: var(--color-career);
+}
+
+.atmo-icon {
+  display: inline-block;
+  transition: all var(--transition-fast);
+  font-size: 0.7rem;
+}
+
+.atmo-icon.off {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+/* ============================================
+   Easter Egg
+   ============================================ */
+.easter-egg {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center,
+    rgba(114, 198, 255, 0.08) 0%,
+    rgba(2, 3, 8, 0.7) 50%,
+    rgba(2, 3, 8, 0.95) 100%
+  );
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 1.5s ease, visibility 1.5s ease;
+}
+
+.easter-egg.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.easter-egg-slogan {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  color: var(--color-line);
+  text-shadow: 0 0 60px rgba(114, 198, 255, 0.4);
+  margin-bottom: 8px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.easter-egg-sub {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+/* ============================================
+   Modals (About / Contact)
+   ============================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 3, 8, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-card {
+  width: 90%;
+  max-width: 400px;
+  padding: 28px 30px;
+}
+
+.modal-card h2 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: var(--color-career);
+}
+
+.modal-card p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(240, 245, 255, 0.75);
+}
+
+.contact-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  transition: all var(--transition-fast);
+}
+
+.contact-link:hover {
+  border-color: var(--glass-border-hover);
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+}
+
+.contact-link .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-dim);
+}
+
+/* ============================================
+   Scrollbar
+   ============================================ */
+.glass-card::-webkit-scrollbar {
+  width: 3px;
+}
+.glass-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+.glass-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+  .loading-title {
+    font-size: 1.8rem;
+  }
+
+  .glass-card {
+    max-width: 92%;
+    padding: 22px 20px;
+    max-height: 75vh;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
+
+  #control-bar {
+    bottom: 16px;
+    padding: 4px;
+    border-radius: 24px;
+    gap: 1px;
+  }
+
+  .ctrl-btn {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    gap: 3px;
+  }
+
+  .ctrl-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Hide button text on very small screens, show only icons */
+  .easter-egg-slogan {
+    font-size: 1.2rem;
+    letter-spacing: 0.15em;
+  }
+
+  .tooltip {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ctrl-btn span {
+    display: none;
+  }
+
+  .ctrl-btn {
+    padding: 8px;
+  }
+
+  .ctrl-btn svg {
+    margin: 0;
+  }
+
+  .control-group + .control-group {
+    padding-left: 2px;
+  }
+}
