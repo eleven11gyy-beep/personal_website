@@ -11,7 +11,14 @@ import ambientStarsVertexShader from './shaders/ambientStars/vertex.glsl';
 import ambientStarsFragmentShader from './shaders/ambientStars/fragment.glsl';
 import spaceVertexShader from './shaders/spaceFog/vertex.glsl';
 import spaceFragmentShader from './shaders/spaceFog/fragment.glsl';
-import { ALL_CONSTELLATIONS, PERSONAL, getStarById } from './star-data.js';
+import { PERSONAL } from './star-data.js';
+import planetVertexShader from './shaders/planets/vertex.glsl';
+import planetFragmentShader from './shaders/planets/fragment.glsl';
+import jupiterFragmentShader from './shaders/planets/jupiterFragment.glsl';
+import marsFragmentShader from './shaders/planets/marsFragment.glsl';
+import neptuneFragmentShader from './shaders/planets/neptuneFragment.glsl';
+import saturnRingVertexShader from './shaders/planets/saturnRingVertex.glsl';
+import saturnRingFragmentShader from './shaders/planets/saturnRingFragment.glsl';
 
 // ============================================
 // 星图 · Star Atlas — Main Renderer
@@ -78,13 +85,17 @@ class SpaceRenderer {
       uEdgeSoftness: 0.5, uGlowIntensity: 0.5,
     };
 
-    // State
-    this.constellationStars = [];  // { mesh, glow, data, hitSphere }
-    this.constellationLines = [];
-    this.selectedStarId = null;
-    this.hoveredStarId = null;
-    this.easterClicked = new Set();
-    this.easterTriggered = false;
+    // Planet state
+    this.planets = [];
+    this.planetHitSpheres = [];
+    this.planetGroup = null;
+    this.planetParams = {
+      lightPosition: new THREE.Vector3(-2, 8, 8),
+      orbitRadius: 12,
+      startAngle: -2.9415,
+      verticalOffset: 6.0,
+      orbitTilt: 0.0,
+    };
 
     this.init();
   }
@@ -96,7 +107,7 @@ class SpaceRenderer {
     this.initSpaceSphere();
     this.initLights();
     this.initCubeMap();
-    this.initConstellations();
+    this.initPlanets();
     this.initCamera();
     this.initRenderer();
     this.initControls();
@@ -276,98 +287,293 @@ class SpaceRenderer {
     this.scene.add(this.spaceSphere);
   }
 
-  // ============ CONSTELLATIONS (核心改造) ============
-  initConstellations() {
-    const careerColor = new THREE.Color(0x72c6ff);
-    const lifeColor = new THREE.Color(0xc89eff);
-    const lineColor = new THREE.Color(0xb8e0ff);
+  // ============ PLANETS (Celestial-Drift 行星系统 + 点击交互) ============
+  initPlanets() {
+    this.planetGroup = new THREE.Group();
 
-    // Star glow texture (generated via canvas)
+    this.planetGroup.rotation.set(
+      this.nebulaTransformParams.rotationX,
+      this.nebulaTransformParams.rotationY,
+      this.nebulaTransformParams.rotationZ
+    );
+
+    this.planetGroup.position.y = this.planetParams.verticalOffset;
+
+    this.scene.add(this.planetGroup);
+
+    const textureLoader = new THREE.TextureLoader(this.loadingManager);
+
+    const planetConfigs = [
+      {
+        name: 'Earth',
+        texture: '/assets/textures/planets/1k_earth.jpg',
+        size: 1.3,
+        atmosphereColor: new THREE.Color(0x26e6ff),
+        atmosphereIntensity: 0.7,
+        rotationSpeed: 0.007,
+        content: {
+          title: '地球 · 蓝色家园',
+          description: '我们的母星，承载着已知宇宙中唯一的生命。用科技与人文的视角探索世界的无限可能。',
+          highlights: ['全栈开发', '开源贡献', '技术写作'],
+          quote: '脚踏实地，仰望星空。',
+        },
+      },
+      {
+        name: 'Venus',
+        texture: '/assets/textures/planets/1k_venus.jpg',
+        size: 1.0,
+        atmosphereColor: new THREE.Color(0xff9800),
+        atmosphereIntensity: 0.8,
+        rotationSpeed: 0.005,
+        content: {
+          title: '金星 · 启明之光',
+          description: '清晨与黄昏最亮的星。对美的追求，对设计的热爱，是前行路上的启明星。',
+          highlights: ['UI/UX 设计', '前端美学', '品牌视觉'],
+          quote: '美是所有伟大产品的第一印象。',
+        },
+      },
+      {
+        name: 'Saturn',
+        texture: '/assets/textures/planets/1k_saturn.jpg',
+        size: 1.3,
+        atmosphereColor: new THREE.Color(0xffd095),
+        atmosphereIntensity: 0.6,
+        rotationSpeed: 0.012,
+        hasRing: true,
+        content: {
+          title: '土星 · 光环之下',
+          description: '美丽的光环并非一日形成。持续积累的项目经验，就是环绕在你身上的独特光环。',
+          highlights: ['项目经验', '团队协作', '持续交付'],
+          quote: '积累让平凡变得璀璨。',
+        },
+      },
+      {
+        name: 'Mars',
+        texture: '/assets/textures/planets/1k_mars.jpg',
+        size: 1.1,
+        atmosphereColor: new THREE.Color(1.0, 0.5, 0.3),
+        atmosphereIntensity: 0.4,
+        rotationSpeed: 0.008,
+        isMars: true,
+        content: {
+          title: '火星 · 探索精神',
+          description: '人类下一个家园的梦想。勇于踏入未知领域，保持对新技术的好奇与探索。',
+          highlights: ['技术探索', '创新项目', '前沿研究'],
+          quote: '去向没有人到达过的地方。',
+        },
+      },
+      {
+        name: 'Mercury',
+        texture: '/assets/textures/planets/1k_mercury_fictional.jpg',
+        size: 1.2,
+        atmosphereColor: new THREE.Color(0.7, 0.6, 0.5),
+        atmosphereIntensity: 0.3,
+        rotationSpeed: 0.01,
+        content: {
+          title: '水星 · 极速思维',
+          description: '离太阳最近的行星，以最快速度公转。高效学习，快速响应，敏捷执行。',
+          highlights: ['快速学习', '敏捷开发', '高效执行'],
+          quote: '速度也是一种竞争力。',
+        },
+      },
+      {
+        name: 'Jupiter',
+        texture: '/assets/textures/planets/1k_jupiter.jpg',
+        size: 1.8,
+        atmosphereColor: new THREE.Color(1.0, 0.7, 0.5),
+        atmosphereIntensity: 1.0,
+        rotationSpeed: 0.015,
+        isJupiter: true,
+        content: {
+          title: '木星 · 宏伟格局',
+          description: '太阳系最大的行星，拥有强大的引力场。培养系统性思维与架构设计能力。',
+          highlights: ['系统架构', '战略思考', '技术领导力'],
+          quote: '格局决定了你能走多远。',
+        },
+      },
+      {
+        name: 'Neptune',
+        texture: '/assets/textures/planets/1k_neptune.jpg',
+        size: 1.2,
+        atmosphereColor: new THREE.Color(0x8a8fff),
+        atmosphereIntensity: 0.8,
+        rotationSpeed: 0.009,
+        isNeptune: true,
+        content: {
+          title: '海王星 · 深邃洞察',
+          description: '遥远的冰巨星，深蓝如海。冷静分析，深入思考，看透问题本质。',
+          highlights: ['深度思考', '根因分析', '批判性思维'],
+          quote: '在深邃的思考中找到答案。',
+        },
+      },
+      {
+        name: 'Pluto',
+        texture: '/assets/textures/planets/1k_pluto.jpg',
+        size: 1.2,
+        atmosphereColor: new THREE.Color(0xab8c6c),
+        atmosphereIntensity: 0.8,
+        rotationSpeed: 0.009,
+        isNeptune: true,
+        content: {
+          title: '冥王星 · 坚韧之心',
+          description: '虽被重新分类，却从未停止公转。在逆境中坚持，在质疑中成长。',
+          highlights: ['坚韧不拔', '自我驱动', '持续成长'],
+          quote: '即便不再是"行星"，我也依然闪亮。',
+        },
+      },
+    ];
+
+    planetConfigs.forEach((config, index) => {
+      const angleStep = (Math.PI * 2) / planetConfigs.length;
+      const angle = this.planetParams.startAngle + index * angleStep;
+
+      const x = Math.cos(angle) * this.planetParams.orbitRadius;
+      const z = Math.sin(angle) * this.planetParams.orbitRadius;
+
+      const y = Math.sin(angle * 2) * this.planetParams.orbitTilt;
+
+      this.createPlanet(
+        config,
+        new THREE.Vector3(x, y, z),
+        textureLoader,
+        angle
+      );
+    });
+  }
+
+  createPlanet(config, position, textureLoader, angle) {
+    const geometry = new THREE.SphereGeometry(config.size, 64, 64);
+
+    let fragmentShader = planetFragmentShader;
+
+    if (config.isJupiter) {
+      fragmentShader = jupiterFragmentShader;
+    } else if (config.isMars) {
+      fragmentShader = marsFragmentShader;
+    } else if (config.isNeptune) {
+      fragmentShader = neptuneFragmentShader;
+    }
+
+    const uniforms = {
+      uTexture: { value: textureLoader.load(config.texture) },
+      uTime: { value: 0 },
+      uLightPosition: { value: this.planetParams.lightPosition.clone() },
+      uPlanetPosition: { value: position.clone() },
+      uAtmosphereColor: { value: config.atmosphereColor },
+      uAtmosphereIntensity: { value: config.atmosphereIntensity },
+      uRotationSpeed: { value: config.rotationSpeed },
+    };
+
+    if (config.isJupiter) {
+      uniforms.uStormIntensity = { value: 0.5 };
+    }
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader: planetVertexShader,
+      fragmentShader: fragmentShader,
+      uniforms: uniforms,
+      transparent: false,
+    });
+
+    const planet = new THREE.Mesh(geometry, material);
+    planet.position.copy(position);
+    planet.userData.config = config;
+    planet.userData.angle = angle;
+    planet.userData.baseY = position.y;
+    planet.userData.isPlanet = true;
+
+    // Glow sprite for hover highlight
     const glowCanvas = document.createElement('canvas');
     glowCanvas.width = 128; glowCanvas.height = 128;
     const gctx = glowCanvas.getContext('2d');
     const grad = gctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.1, 'rgba(255,255,255,0.8)');
-    grad.addColorStop(0.3, 'rgba(114,198,255,0.3)');
-    grad.addColorStop(0.6, 'rgba(114,198,255,0.05)');
+    grad.addColorStop(0.1, 'rgba(255,255,255,0.7)');
+    grad.addColorStop(0.4, 'rgba(114,198,255,0.15)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     gctx.fillStyle = grad; gctx.fillRect(0, 0, 128, 128);
     const glowTexture = new THREE.CanvasTexture(glowCanvas);
 
-    for (const constellation of ALL_CONSTELLATIONS) {
-      // Star meshes
-      for (const star of Object.values(constellation.stars)) {
-        const isActive = star.status === 'active';
-        const isLife = star.type === 'life';
-        const color = isLife ? lifeColor : careerColor;
-        const pos = star.position;
+    const glowMat = new THREE.SpriteMaterial({
+      map: glowTexture,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const glow = new THREE.Sprite(glowMat);
+    glow.scale.set(config.size * 3, config.size * 3, 1);
+    glow.position.copy(position);
+    glow.visible = true;
+    planet.add(glow);
+    planet.userData.glow = glow;
 
-        if (isActive) {
-          // Sphere
-          const geo = new THREE.SphereGeometry(0.5, 24, 24);
-          const mat = new THREE.MeshPhongMaterial({
-            color, emissive: color, emissiveIntensity: 0.4,
-            shininess: 60, transparent: true, opacity: 0.95,
-          });
-          const mesh = new THREE.Mesh(geo, mat);
-          mesh.position.copy(pos);
-          this.scene.add(mesh);
+    // Saturn ring
+    if (config.hasRing) {
+      const ringGeometry = new THREE.RingGeometry(
+        config.size * 1.5,
+        config.size * 2.8,
+        128
+      );
+      const ringMaterial = new THREE.ShaderMaterial({
+        vertexShader: saturnRingVertexShader,
+        fragmentShader: saturnRingFragmentShader,
+        uniforms: {
+          uTime: { value: 0 },
+          uLightPosition: { value: this.planetParams.lightPosition.clone() },
+          uOpacity: { value: 0.7 },
+          uRingColor: { value: new THREE.Color(0.9, 0.85, 0.7) },
+          uRingCount: { value: 30.0 },
+          uGlowIntensity: { value: 0.8 },
+        },
+        transparent: true,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
 
-          // Glow sprite
-          const glowMat = new THREE.SpriteMaterial({
-            map: glowTexture, blending: THREE.AdditiveBlending,
-            depthWrite: false, transparent: true, opacity: 0.5, color,
-          });
-          const glow = new THREE.Sprite(glowMat);
-          glow.scale.set(2.5, 2.5, 1);
-          glow.position.copy(pos);
-          this.scene.add(glow);
-
-          // Hit sphere
-          const hitGeo = new THREE.SphereGeometry(0.8, 8, 8);
-          const hitMat = new THREE.MeshBasicMaterial({ visible: false });
-          const hit = new THREE.Mesh(hitGeo, hitMat);
-          hit.position.copy(pos);
-          hit.userData = { starId: star.id, isActive: true };
-          this.scene.add(hit);
-
-          this.constellationStars.push({ mesh, glow, hit, data: star, baseEmissive: 0.4 });
-        } else {
-          // Dormant: tiny dim glow
-          const dMat = new THREE.SpriteMaterial({
-            map: glowTexture, blending: THREE.AdditiveBlending,
-            depthWrite: false, transparent: true, opacity: 0.08, color,
-          });
-          const d = new THREE.Sprite(dMat);
-          d.scale.set(1.0, 1.0, 1);
-          d.position.copy(pos);
-          this.scene.add(d);
-
-          const hitGeo = new THREE.SphereGeometry(0.5, 4, 4);
-          const hitMat = new THREE.MeshBasicMaterial({ visible: false });
-          const hit = new THREE.Mesh(hitGeo, hitMat);
-          hit.position.copy(pos);
-          hit.userData = { starId: star.id, isActive: false };
-          this.scene.add(hit);
-          this.constellationStars.push({ mesh: null, glow: d, hit, data: star, baseEmissive: 0 });
-        }
-      }
-
-      // Constellation lines
-      if (constellation.connections) {
-        for (const [fromId, toId] of constellation.connections) {
-          const from = constellation.stars[fromId]?.position;
-          const to = constellation.stars[toId]?.position;
-          if (!from || !to) continue;
-          const lineGeo = new THREE.BufferGeometry().setFromPoints([from, to]);
-          const lineMat = new THREE.LineBasicMaterial({ color: lineColor, transparent: true, opacity: 0.15, depthWrite: false });
-          const line = new THREE.Line(lineGeo, lineMat);
-          this.scene.add(line);
-          this.constellationLines.push(line);
-        }
-      }
+      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+      ring.rotation.x = Math.PI / 2;
+      planet.add(ring);
+      planet.userData.ring = ring;
     }
+
+    // Invisible hit sphere for raycaster
+    const hitGeo = new THREE.SphereGeometry(config.size * 1.2, 8, 8);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitSphere = new THREE.Mesh(hitGeo, hitMat);
+    hitSphere.position.copy(position);
+    hitSphere.userData = {
+      planetId: config.name,
+      isPlanet: true,
+      config: config,
+    };
+    this.planetGroup.add(hitSphere);
+    this.planetHitSpheres.push(hitSphere);
+
+    this.planetGroup.add(planet);
+    this.planets.push(planet);
+  }
+
+  updatePlanets(elapsedTime) {
+    this.planets.forEach((planet) => {
+      planet.material.uniforms.uTime.value = elapsedTime;
+
+      const rotationSpeed = planet.userData.config.rotationSpeed || 0.01;
+      planet.rotation.y = elapsedTime * rotationSpeed * 2;
+
+      if (planet.userData.ring) {
+        planet.userData.ring.material.uniforms.uTime.value = elapsedTime;
+        planet.userData.ring.rotation.z = elapsedTime * 0.05;
+      }
+
+      const floatSpeed = 0.3;
+      const floatAmount = 0.05;
+      planet.position.y =
+        planet.userData.baseY +
+        Math.sin(elapsedTime * floatSpeed + planet.userData.angle) *
+          floatAmount;
+    });
   }
 
   // ============ LIGHTS ============
@@ -427,32 +633,31 @@ class SpaceRenderer {
     this.controls.update();
   }
 
-  // ============ INTERACTION (Click/Hover on constellation stars) ============
+  // ============ INTERACTION (Click/Hover on planets) ============
   initInteraction() {
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
+    this.hoveredPlanetId = null;
 
     this.canvas.addEventListener('pointermove', (e) => {
       this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
       this.raycaster.setFromCamera(this.pointer, this.camera);
-      const hits = this.raycaster.intersectObjects(
-        this.constellationStars.filter(s => s.data.status === 'active').map(s => s.hit)
-      );
+      const planetHits = this.raycaster.intersectObjects(this.planetHitSpheres);
 
-      if (hits.length > 0) {
-        const starId = hits[0].object.userData.starId;
-        if (this.hoveredStarId !== starId) {
+      if (planetHits.length > 0) {
+        const planetId = planetHits[0].object.userData.planetId;
+        if (this.hoveredPlanetId !== planetId) {
           this.clearHover();
-          this.hoveredStarId = starId;
-          this.setStarGlow(starId, true);
-          this.showTooltip(starId, e);
+          this.hoveredPlanetId = planetId;
+          this.setPlanetGlow(planetId, true);
+          this.showPlanetTooltip(planetId, e);
         }
       } else {
-        if (this.hoveredStarId) {
+        if (this.hoveredPlanetId) {
           this.clearHover();
-          this.hoveredStarId = null;
+          this.hoveredPlanetId = null;
           this.hideTooltip();
         }
       }
@@ -460,74 +665,38 @@ class SpaceRenderer {
 
     this.canvas.addEventListener('click', (e) => {
       this.raycaster.setFromCamera(this.pointer, this.camera);
-      const hits = this.raycaster.intersectObjects(
-        this.constellationStars.filter(s => s.data.status === 'active').map(s => s.hit)
-      );
-      if (hits.length > 0) {
-        const starId = hits[0].object.userData.starId;
-        this.handleStarClick(starId, e);
+      const planetHits = this.raycaster.intersectObjects(this.planetHitSpheres);
+
+      if (planetHits.length > 0) {
+        const planetId = planetHits[0].object.userData.planetId;
+        this.handlePlanetClick(planetId, e);
       } else {
         this.closeCard();
       }
     });
   }
 
-  setStarGlow(starId, on) {
-    const entry = this.constellationStars.find(s => s.data.id === starId);
-    if (!entry || !entry.mesh) return;
+  setPlanetGlow(planetId, on) {
+    const planet = this.planets.find(p => p.userData.config.name === planetId);
+    if (!planet || !planet.userData.glow) return;
     if (on) {
-      entry.mesh.material.emissiveIntensity = 1.2;
-      if (entry.glow) {
-        entry.glow.scale.set(4, 4, 1);
-        entry.glow.material.opacity = 0.9;
-        entry.glow.material.color.setHex(0xffffff);
-      }
+      planet.userData.glow.material.opacity = 0.9;
+      const size = planet.userData.config.size;
+      planet.userData.glow.scale.set(size * 5, size * 5, 1);
     } else {
-      entry.mesh.material.emissiveIntensity = entry.baseEmissive;
-      if (entry.glow) {
-        entry.glow.scale.set(2.5, 2.5, 1);
-        entry.glow.material.opacity = 0.5;
-        entry.glow.material.color.setHex(entry.data.type === 'life' ? 0xc89eff : 0x72c6ff);
-      }
+      planet.userData.glow.material.opacity = 0.3;
+      const size = planet.userData.config.size;
+      planet.userData.glow.scale.set(size * 3, size * 3, 1);
     }
   }
 
-  clearHover() {
-    if (this.hoveredStarId) {
-      this.setStarGlow(this.hoveredStarId, false);
-      this.hoveredStarId = null;
-    }
-  }
-
-  handleStarClick(starId, event) {
-    const star = getStarById(starId);
-    if (!star || !star.content) return;
-
-    this.selectedStarId = starId;
-    const entry = this.constellationStars.find(s => s.data.id === starId);
-    if (entry && entry.mesh) {
-      entry.mesh.material.emissiveIntensity = 1.5;
-    }
-
-    // Light burst
-    this.triggerLightBurst(event.clientX, event.clientY);
-    setTimeout(() => this.openCard(star), 250);
-
-    // Easter egg
-    const activeDipper = ['tianshu','tianji','tianquan','kaiyang','yaoguang'];
-    if (activeDipper.includes(starId)) {
-      this.easterClicked.add(starId);
-      if (this.easterClicked.size >= 5) this.triggerEasterEgg();
-    }
-  }
-
-  // ============ UI METHODS ============
-  showTooltip(starId, event) {
-    const star = getStarById(starId);
-    if (!star) return;
+  showPlanetTooltip(planetId, event) {
+    const planet = this.planets.find(p => p.userData.config.name === planetId);
+    if (!planet) return;
+    const config = planet.userData.config;
     const el = document.getElementById('tooltip');
-    el.querySelector('.tooltip-label').textContent = star.label || '';
-    el.querySelector('.tooltip-year').textContent = star.year || '';
+    el.querySelector('.tooltip-label').textContent = config.name;
+    el.querySelector('.tooltip-year').textContent = config.content?.title || '';
     el.style.left = event.clientX + 'px';
     el.style.top = event.clientY + 'px';
     el.classList.remove('hidden');
@@ -540,35 +709,50 @@ class SpaceRenderer {
     el.classList.add('hidden');
   }
 
-  openCard(star) {
+  handlePlanetClick(planetId, event) {
+    const planet = this.planets.find(p => p.userData.config.name === planetId);
+    if (!planet || !planet.userData.config.content) return;
+
+    this.selectedPlanetId = planetId;
+
+    // Light burst
+    this.triggerLightBurst(event.clientX, event.clientY);
+    setTimeout(() => this.openPlanetCard(planet.userData.config), 250);
+  }
+
+  openPlanetCard(config) {
     const overlay = document.getElementById('card-overlay');
     const card = document.getElementById('glass-card');
-    const isLife = star.type === 'life';
+    const content = config.content;
 
-    card.style.borderColor = isLife ? 'rgba(200,158,255,0.25)' : 'rgba(114,198,255,0.25)';
-    card.querySelector('.card-title').textContent = star.content.title;
-    const period = [star.label, star.year].filter(Boolean).join(' · ');
-    card.querySelector('.card-period').textContent = period;
-    card.querySelector('.card-description').textContent = star.content.description;
+    card.style.borderColor = 'rgba(114,198,255,0.25)';
+    card.querySelector('.card-title').textContent = content.title;
+    card.querySelector('.card-period').textContent = config.name;
+    card.querySelector('.card-description').textContent = content.description;
 
     const badge = card.querySelector('.card-badge');
-    badge.textContent = star.name;
-    badge.className = 'card-badge' + (isLife ? ' life' : '');
+    badge.textContent = config.name;
+    badge.className = 'card-badge';
 
     const highlights = card.querySelector('.card-highlights');
-    highlights.innerHTML = (star.content.highlights || [])
+    highlights.innerHTML = (content.highlights || [])
       .map(h => `<span style="display:inline-block;margin:2px 4px;padding:2px 10px;border-radius:12px;font-size:0.7rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">${h}</span>`)
       .join('');
 
-    card.querySelector('.card-quote').textContent = star.content.quote || '';
+    card.querySelector('.card-quote').textContent = content.quote || '';
     overlay.classList.add('visible');
   }
 
+  clearHover() {
+    if (this.hoveredPlanetId) {
+      this.setPlanetGlow(this.hoveredPlanetId, false);
+      this.hoveredPlanetId = null;
+    }
+  }
+
   closeCard() {
-    if (this.selectedStarId) {
-      const entry = this.constellationStars.find(s => s.data.id === this.selectedStarId);
-      if (entry && entry.mesh) entry.mesh.material.emissiveIntensity = entry.baseEmissive;
-      this.selectedStarId = null;
+    if (this.selectedPlanetId) {
+      this.selectedPlanetId = null;
     }
     document.getElementById('card-overlay').classList.remove('visible');
   }
@@ -584,53 +768,12 @@ class SpaceRenderer {
     setTimeout(() => { burst.classList.add('hidden'); burst.classList.remove('active'); }, 750);
   }
 
-  triggerEasterEgg() {
-    if (this.easterTriggered) return;
-    this.easterTriggered = true;
-    const overlay = document.getElementById('easter-egg');
-    const sloganEl = overlay.querySelector('.easter-egg-slogan');
-    const subEl = overlay.querySelector('.easter-egg-sub');
-    sloganEl.textContent = ''; subEl.textContent = '';
-    overlay.classList.add('visible');
-
-    const slogan = '人活无数瞬间，星亮漫漫长夜';
-    const sub = '所有细碎闪光，都是人生的支点';
-    let i = 0;
-    const interval = setInterval(() => {
-      sloganEl.textContent = slogan.slice(0, i + 1);
-      i++;
-      if (i >= slogan.length) {
-        clearInterval(interval);
-        setTimeout(() => { subEl.textContent = sub; }, 400);
-        setTimeout(() => { overlay.classList.remove('visible'); }, 5000);
-      }
-    }, 100);
-  }
-
   // ============ UI INIT (Controls, Modals) ============
   initUI() {
     // Card close
     document.getElementById('card-close').addEventListener('click', () => this.closeCard());
     document.getElementById('card-overlay').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) this.closeCard();
-    });
-
-    // Control buttons
-    const focusMap = {
-      'big-dipper': new THREE.Vector3(0.55, 3.5, 2),
-      'skills': new THREE.Vector3(-2, 3, 1),
-      'life': new THREE.Vector3(6, 5, -2),
-      'overview': new THREE.Vector3(0, 3, 0),
-    };
-    document.querySelectorAll('[data-constellation]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-constellation]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const target = focusMap[btn.dataset.constellation];
-        if (target) {
-          this.controls.target.copy(target);
-        }
-      });
     });
 
     // About/Contact
@@ -660,17 +803,11 @@ class SpaceRenderer {
       overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.classList.add('hidden'); overlay.classList.remove('visible'); } });
     });
 
-    // Easter egg dismiss
-    document.getElementById('easter-egg').addEventListener('click', () => {
-      document.getElementById('easter-egg').classList.remove('visible');
-    });
-
     // Keyboard
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.closeCard();
         document.querySelectorAll('.modal-overlay.visible').forEach(m => { m.classList.add('hidden'); m.classList.remove('visible'); });
-        document.getElementById('easter-egg')?.classList.remove('visible');
       }
     });
   }
@@ -719,13 +856,8 @@ class SpaceRenderer {
       this.nebulaMesh.rotateOnWorldAxis(localY, 0.001);
     }
 
-    // Constellation star pulse animation
-    for (const entry of this.constellationStars) {
-      if (!entry.mesh || entry.data.status !== 'active') continue;
-      if (entry.data.id === this.hoveredStarId || entry.data.id === this.selectedStarId) continue;
-      const pulse = 0.85 + 0.15 * Math.sin(elapsedTime * 1.5 + entry.data.id.charCodeAt(0));
-      entry.mesh.material.emissiveIntensity = entry.baseEmissive * pulse;
-    }
+    // Planet animations
+    this.updatePlanets(elapsedTime);
 
     // Parallax camera offset
     if (this.initialCameraPosition) {
