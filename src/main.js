@@ -694,8 +694,13 @@ class SpaceRenderer {
     if (!planet) return;
     const config = planet.userData.config;
     const el = document.getElementById('tooltip');
+<<<<<<< HEAD
     el.querySelector('.tooltip-label').textContent = config.content?.dimension || config.name;
     el.querySelector('.tooltip-year').textContent = config.content?.english || '';
+=======
+    el.querySelector('.tooltip-label').textContent = config.name;
+    el.querySelector('.tooltip-year').textContent = config.content?.title || '';
+>>>>>>> 148e2c1743c6603f72ac498a27aa9729409a1999
     el.style.left = event.clientX + 'px';
     el.style.top = event.clientY + 'px';
     el.classList.remove('hidden');
@@ -724,6 +729,7 @@ class SpaceRenderer {
     const card = document.getElementById('glass-card');
     const content = config.content;
 
+<<<<<<< HEAD
     // Layer 1: 主标题行
     card.querySelector('.planet-card-title').textContent = content.dimension;
     card.querySelector('.planet-card-english').textContent = content.english;
@@ -737,6 +743,23 @@ class SpaceRenderer {
     // Layer 4: 底部诗意收尾短句
     card.querySelector('.planet-card-footer').textContent = content.footer || '';
 
+=======
+    card.style.borderColor = 'rgba(114,198,255,0.25)';
+    card.querySelector('.card-title').textContent = content.title;
+    card.querySelector('.card-period').textContent = config.name;
+    card.querySelector('.card-description').textContent = content.description;
+
+    const badge = card.querySelector('.card-badge');
+    badge.textContent = config.name;
+    badge.className = 'card-badge';
+
+    const highlights = card.querySelector('.card-highlights');
+    highlights.innerHTML = (content.highlights || [])
+      .map(h => `<span style="display:inline-block;margin:2px 4px;padding:2px 10px;border-radius:12px;font-size:0.7rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">${h}</span>`)
+      .join('');
+
+    card.querySelector('.card-quote').textContent = content.quote || '';
+>>>>>>> 148e2c1743c6603f72ac498a27aa9729409a1999
     overlay.classList.add('visible');
   }
 
