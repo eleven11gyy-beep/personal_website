@@ -312,10 +312,10 @@ class SpaceRenderer {
         atmosphereIntensity: 0.7,
         rotationSpeed: 0.007,
         content: {
-          title: '地球 · 蓝色家园',
-          description: '我们的母星，承载着已知宇宙中唯一的生命。用科技与人文的视角探索世界的无限可能。',
-          highlights: ['全栈开发', '开源贡献', '技术写作'],
-          quote: '脚踏实地，仰望星空。',
+          dimension: '待开发',
+          english: 'Earth',
+          tags: ['留白', '未知', '新生'],
+          footer: '余下时光，慢慢书写自我',
         },
       },
       {
@@ -326,10 +326,10 @@ class SpaceRenderer {
         atmosphereIntensity: 0.8,
         rotationSpeed: 0.005,
         content: {
-          title: '金星 · 启明之光',
-          description: '清晨与黄昏最亮的星。对美的追求，对设计的热爱，是前行路上的启明星。',
-          highlights: ['UI/UX 设计', '前端美学', '品牌视觉'],
-          quote: '美是所有伟大产品的第一印象。',
+          dimension: '生活爱好',
+          english: 'Venus',
+          tags: ['欢愉', '音律', '叙事'],
+          footer: '浪漫细碎，填满日常星河',
         },
       },
       {
@@ -341,10 +341,10 @@ class SpaceRenderer {
         rotationSpeed: 0.012,
         hasRing: true,
         content: {
-          title: '土星 · 光环之下',
-          description: '美丽的光环并非一日形成。持续积累的项目经验，就是环绕在你身上的独特光环。',
-          highlights: ['项目经验', '团队协作', '持续交付'],
-          quote: '积累让平凡变得璀璨。',
+          dimension: '作品集',
+          english: 'Saturn',
+          tags: ['构筑', '打磨', '长恒'],
+          footer: '以耐心，筑造属于我的星环',
         },
       },
       {
@@ -356,10 +356,10 @@ class SpaceRenderer {
         rotationSpeed: 0.008,
         isMars: true,
         content: {
-          title: '火星 · 探索精神',
-          description: '人类下一个家园的梦想。勇于踏入未知领域，保持对新技术的好奇与探索。',
-          highlights: ['技术探索', '创新项目', '前沿研究'],
-          quote: '去向没有人到达过的地方。',
+          dimension: '实习履历',
+          english: 'Mars',
+          tags: ['奔赴', '实操', '试炼'],
+          footer: '躬身前行，方见成长',
         },
       },
       {
@@ -370,10 +370,10 @@ class SpaceRenderer {
         atmosphereIntensity: 0.3,
         rotationSpeed: 0.01,
         content: {
-          title: '水星 · 极速思维',
-          description: '离太阳最近的行星，以最快速度公转。高效学习，快速响应，敏捷执行。',
-          highlights: ['快速学习', '敏捷开发', '高效执行'],
-          quote: '速度也是一种竞争力。',
+          dimension: '校园生活',
+          english: 'Mercury',
+          tags: ['思索', '书卷', '求知'],
+          footer: '笔墨藏星，求知不止',
         },
       },
       {
@@ -385,10 +385,10 @@ class SpaceRenderer {
         rotationSpeed: 0.015,
         isJupiter: true,
         content: {
-          title: '木星 · 宏伟格局',
-          description: '太阳系最大的行星，拥有强大的引力场。培养系统性思维与架构设计能力。',
-          highlights: ['系统架构', '战略思考', '技术领导力'],
-          quote: '格局决定了你能走多远。',
+          dimension: '旅行经历',
+          english: 'Jupiter',
+          tags: ['漫游', '旷野', '风物'],
+          footer: '步履所至，皆是辽阔星河',
         },
       },
       {
@@ -400,25 +400,24 @@ class SpaceRenderer {
         rotationSpeed: 0.009,
         isNeptune: true,
         content: {
-          title: '海王星 · 深邃洞察',
-          description: '遥远的冰巨星，深蓝如海。冷静分析，深入思考，看透问题本质。',
-          highlights: ['深度思考', '根因分析', '批判性思维'],
-          quote: '在深邃的思考中找到答案。',
+          dimension: '未来规划',
+          english: 'Neptune',
+          tags: ['远望', '憧憬', '远航'],
+          footer: '心向迷雾，终抵理想岸',
         },
       },
       {
-        name: 'Pluto',
+        name: 'Uranus',
         texture: '/assets/textures/planets/1k_pluto.jpg',
         size: 1.2,
-        atmosphereColor: new THREE.Color(0xab8c6c),
-        atmosphereIntensity: 0.8,
-        rotationSpeed: 0.009,
-        isNeptune: true,
+        atmosphereColor: new THREE.Color(0x7ec8c8),
+        atmosphereIntensity: 0.7,
+        rotationSpeed: 0.006,
         content: {
-          title: '冥王星 · 坚韧之心',
-          description: '虽被重新分类，却从未停止公转。在逆境中坚持，在质疑中成长。',
-          highlights: ['坚韧不拔', '自我驱动', '持续成长'],
-          quote: '即便不再是"行星"，我也依然闪亮。',
+          dimension: '思想碎片',
+          english: 'Uranus',
+          tags: ['思辨', '拆解', '觉醒'],
+          footer: '破开成见，自有新的星河',
         },
       },
     ];
@@ -695,8 +694,8 @@ class SpaceRenderer {
     if (!planet) return;
     const config = planet.userData.config;
     const el = document.getElementById('tooltip');
-    el.querySelector('.tooltip-label').textContent = config.name;
-    el.querySelector('.tooltip-year').textContent = config.content?.title || '';
+    el.querySelector('.tooltip-label').textContent = config.content?.dimension || config.name;
+    el.querySelector('.tooltip-year').textContent = config.content?.english || '';
     el.style.left = event.clientX + 'px';
     el.style.top = event.clientY + 'px';
     el.classList.remove('hidden');
@@ -725,21 +724,19 @@ class SpaceRenderer {
     const card = document.getElementById('glass-card');
     const content = config.content;
 
-    card.style.borderColor = 'rgba(114,198,255,0.25)';
-    card.querySelector('.card-title').textContent = content.title;
-    card.querySelector('.card-period').textContent = config.name;
-    card.querySelector('.card-description').textContent = content.description;
+    // Layer 1: 主标题行
+    card.querySelector('.planet-card-title').textContent = content.dimension;
+    card.querySelector('.planet-card-english').textContent = content.english;
 
-    const badge = card.querySelector('.card-badge');
-    badge.textContent = config.name;
-    badge.className = 'card-badge';
+    // Layer 2: 三意象标签
+    const tagEls = card.querySelectorAll('.planet-card-tag');
+    (content.tags || []).forEach((tag, i) => {
+      if (tagEls[i]) tagEls[i].textContent = tag;
+    });
 
-    const highlights = card.querySelector('.card-highlights');
-    highlights.innerHTML = (content.highlights || [])
-      .map(h => `<span style="display:inline-block;margin:2px 4px;padding:2px 10px;border-radius:12px;font-size:0.7rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">${h}</span>`)
-      .join('');
+    // Layer 4: 底部诗意收尾短句
+    card.querySelector('.planet-card-footer').textContent = content.footer || '';
 
-    card.querySelector('.card-quote').textContent = content.quote || '';
     overlay.classList.add('visible');
   }
 

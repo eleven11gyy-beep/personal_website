@@ -31,20 +31,27 @@
     <span class="tooltip-year"></span>
   </div>
 
-  <!-- Glass Card -->
+  <!-- Planet Card -->
   <div id="card-overlay" class="card-overlay hidden">
-    <div id="glass-card" class="glass-card">
+    <div id="glass-card" class="glass-card planet-card">
       <button class="card-close" id="card-close">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
-      <div class="card-header">
-        <h2 class="card-title"></h2>
-        <span class="card-badge"></span>
+      <!-- Layer 1: 主标题行 — 四字维度 + 英文胶囊 -->
+      <div class="planet-card-header">
+        <h2 class="planet-card-title"></h2>
+        <span class="planet-card-english"></span>
       </div>
-      <div class="card-period"></div>
-      <p class="card-description"></p>
-      <div class="card-highlights"></div>
-      <div class="card-quote"></div>
+      <!-- Layer 2: 三意象标签 -->
+      <div class="planet-card-tags">
+        <span class="planet-card-tag"></span>
+        <span class="planet-card-tag"></span>
+        <span class="planet-card-tag"></span>
+      </div>
+      <!-- Layer 3: 分割线 -->
+      <div class="planet-card-divider"></div>
+      <!-- Layer 4: 底部诗意收尾短句 -->
+      <p class="planet-card-footer"></p>
     </div>
   </div>
 
